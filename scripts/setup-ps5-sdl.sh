@@ -7,6 +7,8 @@ source "$PS5_PAYLOAD_SDK/toolchain/prospero.sh"
 cd "$(dirname "$0")/.." && mkdir -p deps && cd deps
 
 [ -d SDL ] || git clone --depth 1 https://github.com/ps5-payload-dev/SDL.git SDL
+# ZAD : 32 Mo de memoire video au lieu de 64 (la console refusait 64 Mo)
+sed -i 's/device_data->memsize = 0x4000000;/device_data->memsize = 0x2000000;/' SDL/src/video/ps5/SDL_ps5video.c
 (cd SDL && ${CMAKE} -DCMAKE_BUILD_TYPE=Release -DSDL_OPENGL=NO -DSDL_OPENGLES=NO \
   -DSDL_VULKAN=NO -DSDL_LOADSO=YES -DSDL_SHARED=NO -DSDL_STATIC=YES -DSDL_TESTS=NO \
   -B build -S . && ${MAKE} -C build -j"$(nproc)")
