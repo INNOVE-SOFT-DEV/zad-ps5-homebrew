@@ -37,21 +37,27 @@ make ps5                                    # produit build/zad.elf
 make test-ps5 PS5_HOST=192.168.x.x          # équivaut à : nc <IP> 9021 < build/zad.elf
 ```
 
-## 3. Installer ZAD comme une vraie application (voir l'écran)
+## 3. ZAD dans « Contenu multimédia » (méthode retenue)
 
-Un ELF envoyé au chargeur n'est pas une application : la console peut l'exécuter sans
-afficher son image (l'interface passe par-dessus). Le dossier `app/` fabrique donc un titre
-`ZADA00001` avec icône et un `eboot.bin` lanceur : à l'ouverture, il envoie
-`/data/homebrew/zad/zad.elf` au chargeur d'ELF local (127.0.0.1:9021). **Non vérifié sur
-console** : il est possible que l'image ne s'affiche toujours pas.
+Un ELF envoyé au chargeur n'est pas une application : la console l'exécute mais n'affiche pas
+son image (l'interface passe par-dessus). Les apps de l'onglet « Contenu multimédia »
+(ShadowMount, SVT Play…) sont en réalité des **applications web** : `param.json` contient
+`webAppUri`, l'adresse que la console ouvre en plein écran.
+
+- `docs/` : la page ZAD pour la télé (HTML/CSS/JS sans dépendance, 1920×1080, manette :
+  Croix = Entrée, Rond = Échap, flèches, Triangle = F1, Carré = F2). Données d'exemple dans
+  `docs/js/data.js`. Publiée par **GitHub Pages** (branche `main`, dossier `/docs`) à
+  `https://innove-soft-dev.github.io/zad-ps5-homebrew/`.
+- `webapp/` : `zad-install.elf`, qui installe l'icône ZAD (titre `ZADW00001`) et enregistre cette
+  adresse. À envoyer une seule fois au chargeur d'ELF ; l'app survit ensuite aux redémarrages.
+  Code dérivé de `ps5-payload-dev/svtplay` (GPL-3.0+, voir `webapp/LICENSE-GPL3`).
 
 ```
-make -C app                      # produit app/ZADA00001/eboot.bin, installer.elf, uninstaller.elf
-PS5_HOST=192.168.x.x app/install.sh
+make -C webapp                                  # produit webapp/zad-install.elf
+make -C webapp install PS5_HOST=192.168.x.x
 ```
 
-Désinstallation : envoyer `app/uninstaller.elf` au port 9021. Journal du lanceur :
-`/data/zad-eboot.log`. Fichiers inspirés de `samples/install_app` du SDK (GPL-3.0).
+Tester la page sur PC : ouvrir `docs/index.html` (flèches, Entrée, Échap, Q/E).
 
 ## Problèmes courants
 

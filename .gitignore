@@ -3,6 +3,3 @@ build/
 *.bmp
 deps/
 zad.log
-app/*.elf
-app/*.o
-app/ZADA00001/eboot.bin
