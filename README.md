@@ -37,6 +37,22 @@ make ps5                                    # produit build/zad.elf
 make test-ps5 PS5_HOST=192.168.x.x          # équivaut à : nc <IP> 9021 < build/zad.elf
 ```
 
+## 3. Installer ZAD comme une vraie application (voir l'écran)
+
+Un ELF envoyé au chargeur n'est pas une application : la console peut l'exécuter sans
+afficher son image (l'interface passe par-dessus). Le dossier `app/` fabrique donc un titre
+`ZADA00001` avec icône et un `eboot.bin` lanceur : à l'ouverture, il envoie
+`/data/homebrew/zad/zad.elf` au chargeur d'ELF local (127.0.0.1:9021). **Non vérifié sur
+console** : il est possible que l'image ne s'affiche toujours pas.
+
+```
+make -C app                      # produit app/ZADA00001/eboot.bin, installer.elf, uninstaller.elf
+PS5_HOST=192.168.x.x app/install.sh
+```
+
+Désinstallation : envoyer `app/uninstaller.elf` au port 9021. Journal du lanceur :
+`/data/zad-eboot.log`. Fichiers inspirés de `samples/install_app` du SDK (GPL-3.0).
+
 ## Problèmes courants
 
 - `PS5_PAYLOAD_SDK est indefini` : exportez la variable (voir plus haut).
