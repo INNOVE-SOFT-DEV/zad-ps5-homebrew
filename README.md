@@ -18,37 +18,29 @@ make pc
 
 Échap ou Q quitte. Sur manette, le bouton Options (START pour SDL) quitte aussi.
 
-## 2. Version PS5 — **non testée, voir les réserves**
+## 2. Version PS5 — `zad.elf` compilé et lié, **pas encore essayé sur console**
 
-Le PS5 Payload SDK (`ps5-payload-dev/sdk`) fournit la chaîne de compilation, **mais pas SDL2** :
-j'ai téléchargé et ouvert l'archive officielle, elle contient `libc`, `libc++` et les
-bibliothèques système, aucun SDL. Il faut donc installer un portage SDL2 pour PS5 et le
-rendre visible à `prospero-pkg-config` (le Makefile appelle
-`prospero-pkg-config --cflags --libs sdl2`). Je n'ai pas pu vérifier ici où se trouve ce
-portage ni comment l'installer : à confirmer dans la documentation du SDK avant de
-continuer.
-
-Installation du SDK (Debian/Ubuntu/WSL) :
+Le SDK (`ps5-payload-dev/sdk`) ne contient pas SDL2. Il se construit à part, depuis le portage
+`ps5-payload-dev/SDL` ; `scripts/setup-ps5-sdl.sh` le fait pour vous (SDL en bibliothèque
+statique, sans OpenGL ni Vulkan : rendu logiciel, suffisant pour ce projet) ainsi que
+`libsamplerate`, dont SDL a besoin.
 
 ```
-sudo apt-get install bash clang-18 lld-18 wget unzip
+sudo apt-get install bash clang-18 lld-18 wget unzip cmake pkg-config git curl
 wget https://github.com/ps5-payload-dev/sdk/releases/latest/download/ps5-payload-sdk.zip
 sudo unzip -d /opt ps5-payload-sdk.zip
 export PS5_PAYLOAD_SDK=/opt/ps5-payload-sdk
-```
+chmod +x $PS5_PAYLOAD_SDK/bin/*
 
-Compilation et envoi (le chargeur d'ELF écoute sur le port 9021) :
-
-```
-make ps5
-make test-ps5 PS5_HOST=192.168.x.x     # équivaut à : nc <IP> 9021 < build/zad.elf
+./scripts/setup-ps5-sdl.sh                  # une seule fois
+make ps5                                    # produit build/zad.elf
+make test-ps5 PS5_HOST=192.168.x.x          # équivaut à : nc <IP> 9021 < build/zad.elf
 ```
 
 ## Problèmes courants
 
 - `PS5_PAYLOAD_SDK est indefini` : exportez la variable (voir plus haut).
-- Erreur sur `sdl2` à `make ps5` : le portage SDL2 PS5 n'est pas installé ou pas trouvé
-  par `prospero-pkg-config`.
+- `Lancez d'abord scripts/setup-ps5-sdl.sh` : SDL n'est pas encore construit.
 - Écran noir sur la console : essayez de retirer `SDL_WINDOW_FULLSCREEN` dans `src/main.c`,
   ou de forcer le rendu logiciel (déjà utilisé en repli).
 - Manette non détectée : le hello world n'en a pas besoin pour démarrer, mais Options

@@ -16,13 +16,20 @@ ifdef PS5_PAYLOAD_SDK
 include $(PS5_PAYLOAD_SDK)/toolchain/prospero.mk
 endif
 
+DEPS := deps
+SDL_INC := -I$(DEPS)/SDL/build/include -I$(DEPS)/SDL/build/include/SDL2 \
+           -I$(DEPS)/SDL/build/include-config-release/SDL2 -I$(DEPS)/SDL/build/include-config-release
+PS5_LIBS := $(DEPS)/SDL/build/libSDL2.a $(DEPS)/libsamplerate/src/.libs/libsamplerate.a \
+            -lSceSystemService -lSceUserService -lScePad -lSceAudioOut -lSceVideoOut \
+            -lSceKeyboard -lSceImeDialog
+
 build/zad.elf: $(SRC)
 ifndef PS5_PAYLOAD_SDK
 	$(error PS5_PAYLOAD_SDK est indefini : voir README.md, etape 1)
 endif
+	@test -f $(DEPS)/SDL/build/libSDL2.a || { echo "Lancez d'abord scripts/setup-ps5-sdl.sh"; exit 1; }
 	@mkdir -p build
-	$(CC) $(CFLAGS_COMMUN) -DPLATFORM_PS5 $^ -o $@ \
-	  $(shell $(PS5_PAYLOAD_SDK)/bin/prospero-pkg-config --cflags --libs sdl2)
+	$(CC) $(CFLAGS_COMMUN) -DPLATFORM_PS5 $(SDL_INC) $^ -o $@ $(PS5_LIBS)
 
 # envoi vers la console : make test-ps5 PS5_HOST=192.168.x.x
 PS5_HOST ?= ps5
