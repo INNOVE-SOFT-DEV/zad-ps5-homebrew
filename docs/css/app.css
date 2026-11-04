@@ -1,0 +1,68 @@
+:root{
+  --violet:#2B2170; --violet-deep:#1F1757; --ambre:#F2A007;
+  --fond:#F4F3F8; --carte:#FFFFFF; --carte2:#EEEBFA;
+  --texte:#15112E; --texte2:#6B6685; --clair:#D8D3F5;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--fond);color:var(--texte);
+  font-family:'Plus Jakarta Sans',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;cursor:none}
+#app{position:relative;width:100vw;height:100vh;display:flex;flex-direction:column;
+  /* conçu pour 1920x1080 : tout est exprimé en vw pour suivre la taille de l'écran */
+  font-size:1.0417vw}
+#topbar{display:flex;align-items:center;gap:3em;padding:1.4em 3.5em;background:var(--violet);color:#fff;flex:0 0 auto}
+#brand{display:flex;align-items:baseline;gap:.6em}
+.brand-mark{font-weight:800;font-size:2.6em;letter-spacing:.04em;color:var(--ambre)}
+.brand-sub{font-size:1.5em;color:var(--clair);font-weight:700}
+#tabs{display:flex;gap:1em;flex:1}
+.tab{padding:.7em 1.6em;border-radius:1em;font-weight:700;font-size:1.5em;color:var(--clair);border:.15em solid transparent}
+.tab.active{background:var(--violet-deep);color:#fff}
+.tab.focused{border-color:var(--ambre);color:#fff}
+#clock{font-weight:700;font-size:1.5em;color:var(--clair)}
+#screen{flex:1;overflow:hidden;padding:2.2em 3.5em 0;position:relative}
+.titre{font-weight:800;font-size:2.6em;letter-spacing:-.01em;margin-bottom:.7em}
+.sous{font-size:1.5em;font-weight:500;color:var(--texte2)}
+.search{height:3.6em;border-radius:1.1em;background:var(--carte);display:flex;align-items:center;padding:0 1.4em;
+  font-size:1.5em;font-weight:500;color:var(--texte2);margin-bottom:1.3em;border:.14em solid transparent}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1.5em}
+.card{background:var(--carte);border-radius:1.3em;overflow:hidden;border:.18em solid transparent;
+  transition:transform .12s,box-shadow .12s}
+.card .art{height:8em;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff}
+.card .art .mono{font-size:4em;line-height:1}
+.card .info{padding:1em 1.2em 1.2em}
+.card .nom{font-weight:800;font-size:1.45em;line-height:1.2}
+.card .com{font-weight:500;font-size:1.15em;color:var(--texte2);margin-top:.25em}
+.card .prix{font-weight:800;font-size:1.5em;margin-top:.6em;color:var(--violet)}
+.focusable.focused{border-color:var(--ambre);box-shadow:0 0 0 .22em rgba(242,160,7,.35),0 1em 2em rgba(43,33,112,.25);transform:scale(1.04)}
+.search.focused{transform:none}
+.detail{display:flex;gap:3em}
+.detail .art{width:30em;height:22em;border-radius:1.6em;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;flex:0 0 auto}
+.detail .art .mono{font-size:8em;line-height:1}
+.detail .corps{flex:1}
+.detail h1{font-weight:800;font-size:3em;line-height:1.1;letter-spacing:-.02em}
+.detail .com{font-size:1.7em;font-weight:700;color:var(--texte2);margin-top:.3em}
+.detail .prix{font-size:3em;font-weight:800;color:var(--violet);margin:.4em 0 .2em}
+.detail .creneau{font-size:1.4em;font-weight:700;background:var(--carte2);display:inline-block;padding:.45em 1em;border-radius:.8em}
+.detail p{font-size:1.5em;line-height:1.5;font-weight:500;color:var(--texte2);margin:1em 0 1.6em;max-width:30em}
+.btn{display:inline-flex;align-items:center;justify-content:center;height:3.4em;padding:0 2.4em;border-radius:1.1em;
+  font-weight:800;font-size:1.6em;border:.18em solid transparent}
+.btn.plein{background:var(--ambre);color:var(--texte)}
+.btn.sec{background:var(--carte2);color:var(--violet)}
+.liste{display:flex;flex-direction:column;gap:1em;max-width:62em}
+.ligne{display:flex;align-items:center;gap:1.5em;background:var(--carte);border-radius:1.3em;padding:1.1em 1.6em;border:.18em solid transparent}
+.ligne .pastille{width:5em;height:5em;border-radius:1.2em;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;flex:0 0 auto}
+.ligne .pastille .mono{font-size:2em;line-height:1}
+.ligne .txt{flex:1}
+.ligne .n{font-weight:800;font-size:1.5em}
+.ligne .c{font-weight:500;font-size:1.15em;color:var(--texte2);margin-top:.2em}
+.ligne .v{font-weight:800;font-size:1.5em;color:var(--violet)}
+.ticket{font-weight:800;font-size:1.3em;background:var(--violet);color:#fff;border-radius:.8em;padding:.4em .9em;letter-spacing:.06em}
+.menu .ligne{font-weight:700;font-size:1.5em;height:3.6em}
+.menu .ligne .chev{margin-left:auto;color:var(--texte2);font-size:1.2em}
+.vide{font-size:1.7em;font-weight:500;color:var(--texte2);max-width:30em;line-height:1.5}
+.bientot{display:flex;flex-direction:column;align-items:center;justify-content:center;height:60%;text-align:center}
+.bientot .titre{margin:0}
+.versionline{position:absolute;left:0;right:0;bottom:1.6em;text-align:center;font-size:1.15em;font-weight:500;color:var(--texte2)}
+#hints{flex:0 0 auto;display:flex;justify-content:center;gap:3em;padding:.9em;background:var(--carte);font-size:1.05em;font-weight:700;color:var(--texte2)}
+.k{display:inline-block;min-width:1.8em;text-align:center;background:var(--violet);color:#fff;border-radius:.5em;padding:.15em .4em;margin-right:.5em}
+#toast{position:absolute;left:50%;bottom:5em;transform:translateX(-50%);background:var(--violet);color:#fff;
+  font-weight:800;font-size:1.5em;padding:.9em 1.8em;border-radius:1.1em;box-shadow:0 1em 2em rgba(0,0,0,.3)}
