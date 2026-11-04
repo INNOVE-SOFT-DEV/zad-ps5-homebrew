@@ -9,7 +9,7 @@ endif
 TITLE_ID := ZADA00001
 ELF2SELF := $(PS5_PAYLOAD_SDK)/samples/install_app/make_fself.py
 CFLAGS := -Wall -Werror -g -DTITLE_ID=\"$(TITLE_ID)\"
-LDADD := -lSceIpmi -lSceAppInstUtil -lSceUserService -lSceSystemService
+LDADD := -lSceIpmi -lSceAppInstUtil -lSceUserService -lSceSystemService -lSceNotification
 PS4_SDK_VERSION ?= 0x07590001
 AUTHID := 0x3800000000000022
 AUTHINFO := 00 00 00 00 00 00 00 00 00 00 00 00 00 1C 00 40 00 FF 00 00 00 00 \
