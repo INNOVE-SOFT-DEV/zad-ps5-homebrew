@@ -1,66 +1,39 @@
-/* Installe le titre ZADA00001 (dossier deja depose dans /user/app/ et /system_ex/app/).
- * Ecrit /data/zad-install.log et affiche une notification avec le resultat. Base sur le SDK. */
-#include <stdbool.h>
-#include <stdio.h>
-
-int sceAppInstUtilInitialize(void);
-int sceAppInstUtilAppInstallTitleDir(const char *, const char *, void *);
-int sceAppInstUtilAppExists(const char *, int *);
-int sceNotificationSend(int userId, bool isLogged, const char *payload);
-
-static void journal(const char *msg)
-{
-    FILE *f = fopen("/data/zad-install.log", "a");
-    if (f) {
-        fprintf(f, "%s\n", msg);
-        fclose(f);
-    }
-    printf("%s\n", msg);
-}
-
-static void notifier(const char *texte)
-{
-    char json[1024];
-    snprintf(json, sizeof json,
-             "{\"rawData\":{\"viewTemplateType\":\"InteractiveToastTemplateB\","
-             "\"channelType\":\"Downloads\",\"useCaseId\":\"IDC\","
-             "\"toastOverwriteType\":\"No\",\"isImmediate\":true,\"priority\":100,"
-             "\"viewData\":{\"icon\":{\"type\":\"Predefined\",\"parameters\":{\"icon\":\"download\"}},"
-             "\"message\":{\"body\":\"%s\"}},"
-             "\"platformViews\":{\"previewDisabled\":{\"viewData\":{\"icon\":{\"type\":\"Predefined\","
-             "\"parameters\":{\"icon\":\"download\"}},\"message\":{\"body\":\"%s\"}}}}},"
-             "\"createdDateTime\":\"2026-11-05T00:00:00.000Z\",\"localNotificationId\":\"4243\"}",
-             texte, texte);
-    sceNotificationSend(0xFE, false, json);
-}
+/* Installe le titre ZADA00001 (dossiers deja deposes par FTP). Base sur samples/install_app du SDK. */
+#include "common.h"
 
 int main(void)
 {
-    char m[160];
-    int err, existe = -1;
+    char m[200];
+    journal("installer v3: demarrage");
+    void *ipmi = charger("libSceIpmi.sprx");
+    void *user = charger("libSceUserService.sprx");
+    void *sys = charger("libSceSystemService.sprx");
+    void *inst = charger("libSceAppInstUtil.sprx");
+    void *notif = charger("libSceNotification.sprx");
+    (void)ipmi; (void)user; (void)sys;
 
-    journal("installer: demarrage");
-    if ((err = sceAppInstUtilInitialize())) {
-        snprintf(m, sizeof m, "installer: Initialize erreur %x", err);
-        journal(m);
-        notifier(m);
+    int (*init)(void) = symbole(inst, "sceAppInstUtilInitialize");
+    int (*install)(const char *, const char *, void *) = symbole(inst, "sceAppInstUtilAppInstallTitleDir");
+    int (*existe)(const char *, int *) = symbole(inst, "sceAppInstUtilAppExists");
+    if (!init || !install) {
+        notifier(notif, "ZAD: bibliotheque d'installation introuvable");
         return -1;
     }
-    journal("installer: init ok");
-
-    err = sceAppInstUtilAppInstallTitleDir(TITLE_ID, "/user/app/", 0);
-    snprintf(m, sizeof m, "installer: InstallTitleDir retour %x", err);
+    int err = init();
+    snprintf(m, sizeof m, "Initialize retour %x", err);
     journal(m);
-
-    int e2 = sceAppInstUtilAppExists(TITLE_ID, &existe);
-    snprintf(m, sizeof m, "installer: Exists retour %x existe=%d", e2, existe);
-    journal(m);
-
     if (err) {
-        snprintf(m, sizeof m, "ZAD: installation echouee (code %x)", err);
-    } else {
-        snprintf(m, sizeof m, "ZAD installe (existe=%d)", existe);
+        snprintf(m, sizeof m, "ZAD: init erreur %x", err);
+        notifier(notif, m);
+        return -1;
     }
-    notifier(m);
+    err = install(TITLE_ID, "/user/app/", 0);
+    snprintf(m, sizeof m, "InstallTitleDir retour %x", err);
+    journal(m);
+    int ex = -1, e2 = existe ? existe(TITLE_ID, &ex) : -2;
+    snprintf(m, sizeof m, "Exists retour %x existe=%d", e2, ex);
+    journal(m);
+    snprintf(m, sizeof m, err ? "ZAD: installation echouee (%x)" : "ZAD installe (existe=%d)", err ? err : ex);
+    notifier(notif, m);
     return err ? -1 : 0;
 }
