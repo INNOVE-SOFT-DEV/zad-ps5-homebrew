@@ -103,7 +103,14 @@ int main(void)
     const char *shot = getenv("ZAD_SHOT"); /* capture d'ecran PC, pour les tests */
     int quitter = 0;
     Uint32 frame = 0;
+    const Uint32 debut = SDL_GetTicks();
     while (!quitter) {
+        /* Arret automatique : ne jamais laisser le programme garder la sortie video. */
+        if (SDL_GetTicks() - debut > 30000) {
+            journal("quitter: delai de 30 s%s", "");
+            quitter = 1;
+            break;
+        }
         SDL_Event e;
         while (SDL_PollEvent(&e)) {
             if (frame < 600) {
@@ -115,7 +122,8 @@ int main(void)
                 journal("quitter: SDL_QUIT%s", "");
                 quitter = 1;
             }
-            if (e.type == SDL_KEYDOWN && (e.key.keysym.sym == SDLK_ESCAPE || e.key.keysym.sym == SDLK_q)) {
+            if (e.type == SDL_KEYDOWN && (e.key.keysym.sym == SDLK_ESCAPE || e.key.keysym.sym == SDLK_q ||
+                 e.key.keysym.scancode == SDL_SCANCODE_MENU || e.key.keysym.sym == SDLK_RETURN)) {
                 journal("quitter: touche%s", "");
                 quitter = 1;
             }
