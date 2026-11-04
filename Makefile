@@ -21,7 +21,7 @@ SDL_INC := -I$(DEPS)/SDL/build/include -I$(DEPS)/SDL/build/include/SDL2 \
            -I$(DEPS)/SDL/build/include-config-release/SDL2 -I$(DEPS)/SDL/build/include-config-release
 PS5_LIBS := $(DEPS)/SDL/build/libSDL2.a $(DEPS)/libsamplerate/src/.libs/libsamplerate.a \
             -lSceSystemService -lSceUserService -lScePad -lSceAudioOut -lSceVideoOut \
-            -lSceKeyboard -lSceImeDialog
+            -lSceKeyboard -lSceImeDialog -lSceNotification
 
 build/zad.elf: $(SRC)
 ifndef PS5_PAYLOAD_SDK

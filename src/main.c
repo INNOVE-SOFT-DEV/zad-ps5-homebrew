@@ -25,6 +25,29 @@ static void journal(const char *fmt, const char *arg)
     fclose(f);
 }
 
+#ifdef PLATFORM_PS5
+#include <stdbool.h>
+int sceNotificationSend(int userId, bool isLogged, const char *payload);
+/* Petite notification a l'ecran de la PS5, pour voir que le programme tourne. */
+static void notifier(const char *texte)
+{
+    char json[1024];
+    snprintf(json, sizeof json,
+             "{\"rawData\":{\"viewTemplateType\":\"InteractiveToastTemplateB\","
+             "\"channelType\":\"Downloads\",\"useCaseId\":\"IDC\","
+             "\"toastOverwriteType\":\"No\",\"isImmediate\":true,\"priority\":100,"
+             "\"viewData\":{\"icon\":{\"type\":\"Predefined\",\"parameters\":{\"icon\":\"download\"}},"
+             "\"message\":{\"body\":\"%s\"}},"
+             "\"platformViews\":{\"previewDisabled\":{\"viewData\":{\"icon\":{\"type\":\"Predefined\","
+             "\"parameters\":{\"icon\":\"download\"}},\"message\":{\"body\":\"%s\"}}}}},"
+             "\"createdDateTime\":\"2026-11-04T23:00:00.000Z\",\"localNotificationId\":\"4242\"}",
+             texte, texte);
+    sceNotificationSend(0xFE, false, json);
+}
+#else
+static void notifier(const char *texte) { (void)texte; }
+#endif
+
 static const char *LETTRES[3][7] = {
     {"11111", "00001", "00010", "00100", "01000", "10000", "11111"}, /* Z */
     {"01110", "10001", "10001", "11111", "10001", "10001", "10001"}, /* A */
@@ -60,6 +83,14 @@ int main(void)
         return 1;
     }
     journal("surface ok", "");
+    {
+        char info[200];
+        snprintf(info, sizeof info, "pilote=%s fenetre=%dx%d surface=%dx%d bpp=%d pitch=%d",
+                 SDL_GetCurrentVideoDriver(), W, H, surf->w, surf->h,
+                 surf->format->BytesPerPixel, surf->pitch);
+        journal("%s", info);
+    }
+    notifier("ZAD demarre");
 
     for (int i = 0; i < SDL_NumJoysticks(); i++)
         if (SDL_IsGameController(i))
@@ -75,13 +106,24 @@ int main(void)
     while (!quitter) {
         SDL_Event e;
         while (SDL_PollEvent(&e)) {
-            if (e.type == SDL_QUIT)
+            if (frame < 600) {
+                char t[40];
+                snprintf(t, sizeof t, "evenement type=%u (image %u)", e.type, frame);
+                journal("%s", t);
+            }
+            if (e.type == SDL_QUIT) {
+                journal("quitter: SDL_QUIT%s", "");
                 quitter = 1;
-            if (e.type == SDL_KEYDOWN && (e.key.keysym.sym == SDLK_ESCAPE || e.key.keysym.sym == SDLK_q))
+            }
+            if (e.type == SDL_KEYDOWN && (e.key.keysym.sym == SDLK_ESCAPE || e.key.keysym.sym == SDLK_q)) {
+                journal("quitter: touche%s", "");
                 quitter = 1;
+            }
             /* Options (PS5) = bouton START cote SDL */
-            if (e.type == SDL_CONTROLLERBUTTONDOWN && e.cbutton.button == SDL_CONTROLLER_BUTTON_START)
+            if (e.type == SDL_CONTROLLERBUTTONDOWN && e.cbutton.button == SDL_CONTROLLER_BUTTON_START) {
+                journal("quitter: Options%s", "");
                 quitter = 1;
+            }
         }
         SDL_FillRect(surf, NULL, violet);
         dessiner_zad(surf, ambre, surf->w / 2 - (17 * 36) / 2, surf->h / 2 - 7 * 36 / 2 - 40, 36);
@@ -101,8 +143,14 @@ int main(void)
             quitter = 1;
         }
         frame++;
+        if (frame % 120 == 0) {
+            char t[40];
+            snprintf(t, sizeof t, "image %u", frame);
+            journal("%s", t);
+        }
         SDL_Delay(16);
     }
+    journal("fin normale%s", "");
     SDL_Quit();
     return 0;
 }
