@@ -1,6 +1,7 @@
 /* ZAD PS5 - hello world : ecran violet + "ZAD" + indicateur de vie.
- * Meme code pour PC (Linux/WSL) et PS5. Pas de SDL2_ttf ici : les lettres
- * sont dessinees avec des rectangles, pour ne tester que SDL2 + la toolchain. */
+ * Meme code pour PC (Linux/WSL) et PS5. Dessin direct sur la surface de la
+ * fenetre (SDL_GetWindowSurface) : c'est la seule voie geree par le portage SDL PS5.
+ * Pas de SDL2_ttf : les lettres sont dessinees avec des rectangles. */
 #include <SDL2/SDL.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,10 +9,21 @@
 #define W 1920
 #define H 1080
 
-/* Couleurs du design ZAD */
-#define VIOLET 0x2B, 0x21, 0x70
-#define AMBRE 0xF2, 0xA0, 0x07
-#define CLAIR 0xD8, 0xD3, 0xF5
+#ifdef PLATFORM_PS5
+#define LOG_PATH "/data/zad.log"
+#else
+#define LOG_PATH "zad.log"
+#endif
+
+static void journal(const char *fmt, const char *arg)
+{
+    FILE *f = fopen(LOG_PATH, "a");
+    if (!f)
+        return;
+    fprintf(f, fmt, arg ? arg : "");
+    fputc('\n', f);
+    fclose(f);
+}
 
 static const char *LETTRES[3][7] = {
     {"11111", "00001", "00010", "00100", "01000", "10000", "11111"}, /* Z */
@@ -19,54 +31,43 @@ static const char *LETTRES[3][7] = {
     {"11110", "10001", "10001", "10001", "10001", "10001", "11110"}, /* D */
 };
 
-static void dessiner_zad(SDL_Renderer *r, int x0, int y0, int px)
+static void dessiner_zad(SDL_Surface *s, Uint32 couleur, int x0, int y0, int px)
 {
     for (int l = 0; l < 3; l++)
         for (int ry = 0; ry < 7; ry++)
             for (int rx = 0; rx < 5; rx++)
                 if (LETTRES[l][ry][rx] == '1') {
                     SDL_Rect c = {x0 + l * 6 * px + rx * px, y0 + ry * px, px - 6, px - 6};
-                    SDL_RenderFillRect(r, &c);
+                    SDL_FillRect(s, &c, couleur);
                 }
-}
-
-static void capture(SDL_Renderer *r, const char *chemin)
-{
-    SDL_Surface *s = SDL_CreateRGBSurfaceWithFormat(0, W, H, 32, SDL_PIXELFORMAT_ARGB8888);
-    if (!s)
-        return;
-    SDL_RenderReadPixels(r, NULL, SDL_PIXELFORMAT_ARGB8888, s->pixels, s->pitch);
-    SDL_SaveBMP(s, chemin);
-    SDL_FreeSurface(s);
 }
 
 int main(void)
 {
+    journal("demarrage ZAD%s", "");
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER) != 0) {
-        fprintf(stderr, "SDL_Init: %s\n", SDL_GetError());
+        journal("SDL_Init: %s", SDL_GetError());
         return 1;
     }
-    Uint32 fenetre_flags = SDL_WINDOW_SHOWN;
-#ifdef PLATFORM_PS5
-    fenetre_flags |= SDL_WINDOW_FULLSCREEN;
-#endif
-    SDL_Window *win = SDL_CreateWindow("ZAD", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, W, H, fenetre_flags);
+    SDL_Window *win = SDL_CreateWindow("ZAD", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, W, H, SDL_WINDOW_SHOWN);
     if (!win) {
-        fprintf(stderr, "SDL_CreateWindow: %s\n", SDL_GetError());
+        journal("SDL_CreateWindow: %s", SDL_GetError());
         return 1;
     }
-    SDL_Renderer *r = SDL_CreateRenderer(win, -1, 0);
-    if (!r)
-        r = SDL_CreateRenderer(win, -1, SDL_RENDERER_SOFTWARE);
-    if (!r) {
-        fprintf(stderr, "SDL_CreateRenderer: %s\n", SDL_GetError());
+    SDL_Surface *surf = SDL_GetWindowSurface(win);
+    if (!surf) {
+        journal("SDL_GetWindowSurface: %s", SDL_GetError());
         return 1;
     }
-    SDL_RenderSetLogicalSize(r, W, H);
+    journal("surface ok", "");
 
     for (int i = 0; i < SDL_NumJoysticks(); i++)
         if (SDL_IsGameController(i))
             SDL_GameControllerOpen(i);
+
+    const Uint32 violet = SDL_MapRGB(surf->format, 0x2B, 0x21, 0x70);
+    const Uint32 ambre = SDL_MapRGB(surf->format, 0xF2, 0xA0, 0x07);
+    const Uint32 clair = SDL_MapRGB(surf->format, 0xD8, 0xD3, 0xF5);
 
     const char *shot = getenv("ZAD_SHOT"); /* capture d'ecran PC, pour les tests */
     int quitter = 0;
@@ -82,23 +83,21 @@ int main(void)
             if (e.type == SDL_CONTROLLERBUTTONDOWN && e.cbutton.button == SDL_CONTROLLER_BUTTON_START)
                 quitter = 1;
         }
-        SDL_SetRenderDrawColor(r, VIOLET, 255);
-        SDL_RenderClear(r);
+        SDL_FillRect(surf, NULL, violet);
+        dessiner_zad(surf, ambre, surf->w / 2 - (17 * 36) / 2, surf->h / 2 - 7 * 36 / 2 - 40, 36);
 
-        SDL_SetRenderDrawColor(r, AMBRE, 255);
-        dessiner_zad(r, W / 2 - (17 * 36) / 2, H / 2 - 7 * 36 / 2 - 40, 36);
+        /* barre qui avance : preuve que la boucle tourne */
+        SDL_Rect rail = {surf->w / 2 - 300, surf->h - 160, 600, 12};
+        SDL_FillRect(surf, &rail, clair);
+        SDL_Rect cur = {surf->w / 2 - 300 + (int)((frame * 6) % 520), surf->h - 164, 80, 20};
+        SDL_FillRect(surf, &cur, ambre);
 
-        /* barre ambre qui avance : preuve que la boucle tourne */
-        SDL_SetRenderDrawColor(r, CLAIR, 255);
-        SDL_Rect rail = {W / 2 - 300, H - 160, 600, 12};
-        SDL_RenderFillRect(r, &rail);
-        SDL_SetRenderDrawColor(r, AMBRE, 255);
-        SDL_Rect cur = {W / 2 - 300 + (int)((frame * 6) % 520), H - 164, 80, 20};
-        SDL_RenderFillRect(r, &cur);
-
-        SDL_RenderPresent(r);
+        if (SDL_UpdateWindowSurface(win) != 0 && frame == 0)
+            journal("SDL_UpdateWindowSurface: %s", SDL_GetError());
+        if (frame == 0)
+            journal("premiere image envoyee", "");
         if (shot && frame == 3) {
-            capture(r, shot);
+            SDL_SaveBMP(surf, shot);
             quitter = 1;
         }
         frame++;

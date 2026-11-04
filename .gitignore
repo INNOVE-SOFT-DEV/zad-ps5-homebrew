@@ -2,3 +2,4 @@ build/
 *.elf
 *.bmp
 deps/
+zad.log
